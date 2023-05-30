@@ -1,0 +1,19 @@
+# /shop1/src/main/resources/messages.txt =>
+# 	/shop1/src/main/resources/messages.properties
+# 				birthday : 파라미터이름
+typeMismatch.birthday=생년월일은 YYYY-MM-DD 형식으로 입력해주세요
+
+error.input.user=회원가입정보 입력 오류입니다.
+error.input.check=입력정보를 확인하세요.
+error.duplicate.user=중복된 아이디 입니다.
+error.login.input=로그인 정보 입력 오류
+error.login.id=아이디를 확인항세요
+error.login.password= 비밀번호 오류
+error.update.user= 입력 오류 임니다
+error.required.userid=아이디를 입력하세용
+error.required.email=이메일을 입력하세염
+error.required.phoneno=전화번호 입력하삼
+
+error.userid.search=아이디를 찾을 수 없음
+error.password.search=비밀번호 못찾음
+
