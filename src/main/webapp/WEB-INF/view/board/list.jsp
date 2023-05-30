@@ -33,7 +33,7 @@
 			</script>	
 	</td>
 	<td colspan="3"><input type="text" name="searchcontent"
-		value=""${param.searchcontent}" class="w3-input">
+		value="${param.searchcontent}" class="w3-input">
 	</td>
 	<td>
 		<input type="submit" value="검색" class="w3-btn w3-blue">

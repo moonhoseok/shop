@@ -70,6 +70,17 @@ public class BoardController {
 	public ModelAndView list (@RequestParam Map<String,String> param,
 												HttpSession session) {
 		System.out.println(param);
+		String column = param.get("searchtype");
+		String find = param.get("searchcontent");
+		System.out.println("찾기 : "+column + find);
+		if(column == null || column.trim().equals("")) {
+	    	column = null;
+	    	find = null;
+	    }
+	    if(find == null || find.trim().equals("")) {
+	    	column = null;
+	    	find = null;
+	    }
 		Integer pageNum = null;
 		if(param.get("pageNum") != null) {
 			pageNum = Integer.parseInt(param.get("pageNum"));
@@ -90,9 +101,9 @@ public class BoardController {
 			case "3" : boardName = "QnA"; break;	
 		}
 		int limit = 10; // 한페이지당 보여줄 게시물 건수
-		int listcount = service.boardcount(boardid); //등록된 게시물 건수
+		int listcount = service.boardcount(boardid,column,find); //등록된 게시물 건수
 		// boardlist : 현재 페이지에 보여줄 게시물 목록
-		List<Board> boardlist = service.boardlist(pageNum,limit,boardid);
+		List<Board> boardlist = service.boardlist(pageNum,limit,boardid,column,find);
 		//페이징 처리를 위한 값들
 		int maxpage = (int)((double)listcount/limit+0.95); //등록 건수에 따른 최대 페이지 수
 		int startpage = (int)((pageNum/10.0 +0.9)-1) *10 +1; // 페이지의 시작 번호

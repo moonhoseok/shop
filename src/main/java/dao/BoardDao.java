@@ -45,19 +45,29 @@ public class BoardDao {
 		template.update(sql, param);
 		
 	}
-	public int count(String boardid) {
+	public int count(String boardid,String column, String find) {
 		String sql = "select count(*) from board where boardid=:boardid";
 		param.clear();
 		param.put("boardid", boardid);
+		if(column != null && find != null) {
+			sql += " and "+ column +" like :find";
+			param.put("find", "%"+find+"%");
+		}
 		return template.queryForObject(sql, param, Integer.class);
 	}
 	private String select =" select num,writer,pass,title,content,file1 fileurl,"
 			+ "regdate,readcnt,grp, grplevel, grpstep,boardid from board";
 	
-	public List<Board> list(Integer pageNum, int limit, String boardid) {
+	public List<Board> list(Integer pageNum, int limit, String boardid
+			,String column, String find) {
 		param.clear();
 		String sql = select;
-		sql += " where boardid=:boardid order by grp desc, grpstep asc "
+		sql += " where boardid =:boardid ";
+		if(column != null && find != null) {
+			sql += " and " + column + " like :find";
+			param.put("find", "%"+find+"%");
+		}
+		sql += " order by grp desc, grpstep asc "
 				+ " limit :startrow, :limit";
 		param.put("startrow", (pageNum-1)*limit); //1페이지 :0 , 2페이지 :10
 		param.put("limit", limit);
