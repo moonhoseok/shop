@@ -68,7 +68,7 @@ public class BoardDao {
 			param.put("find", "%"+find+"%");
 		}
 		sql += " order by grp desc, grpstep asc "
-				+ " limit :startrow, :limit";
+			+ " limit :startrow, :limit";
 		param.put("startrow", (pageNum-1)*limit); //1페이지 :0 , 2페이지 :10
 		param.put("limit", limit);
 		param.put("boardid", boardid);
@@ -85,6 +85,15 @@ public class BoardDao {
 		param.clear();
 		param.put("num", num);
 		String sql = "update board set readcnt=readcnt+1 where num =:num";
+		template.update(sql, param);
+	}
+	
+	public void updateGrpStep(Board board) {
+		String sql = "update board set grpstep=grpstep+1"
+				+ " where grp =:grp and grpstep >:grpstep";
+		param.clear();
+		param.put("grp", board.getGrp());
+		param.put("grpstep", board.getGrpstep());
 		template.update(sql, param);
 	}
 	

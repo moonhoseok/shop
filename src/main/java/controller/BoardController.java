@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.servlet.ModelAndView;
 
+import exception.LoginException;
 import logic.Board;
 import logic.ShopService;
 
@@ -73,6 +74,7 @@ public class BoardController {
 		String column = param.get("searchtype");
 		String find = param.get("searchcontent");
 		System.out.println("찾기 : "+column + find);
+		// 검색타입 단어 여부판단
 		if(column == null || column.trim().equals("")) {
 	    	column = null;
 	    	find = null;
@@ -136,7 +138,82 @@ public class BoardController {
 		}else if(board.getBoardid().equals("3")) {
 			mav.addObject("boardName","QnA");
 		}
-		mav.addObject(board);
+		mav.addObject("board",board);
 		return mav;
 	}
+	
+	@GetMapping("reply")
+	public ModelAndView replyform(Integer num) {
+		ModelAndView mav = new ModelAndView();
+		Board board = service.getBoard(num);
+		if(board.getBoardid() ==null || board.getBoardid().equals("1")) {
+			mav.addObject("boardName","공지사항");
+		}else if(board.getBoardid().equals("2")) {
+			mav.addObject("boardName","자유게시판");
+		}else if(board.getBoardid().equals("3")) {
+			mav.addObject("boardName","QnA");
+		}
+		mav.addObject("board",board);
+		return mav;
+	}
+	/*
+	 * 1. 유효성 검사하기-파라미터값 저장.
+	 * 	- 원글정보 : num,grp,grpstep,grplevel,boardid
+	 * 	- 답글정보 : writer, pass, title, content
+	 * 2. db에 insert => service.boardReply()
+	 * 	- 원글의 grpstep보다 큰 이미 등록된 답글의 grpstep 값을 +1
+	 * 		=> boardDao.grpstepAdd()
+	 * 	- num : maxNum()+1
+	 * 	- db에 insert => boardDao.insert()
+	 * 	  grp : 원글과 동일
+	 *    grplevel : 원글의 grplevel +1
+	 *    grpstep : 원글dml grpstep +1
+	 * 3. 등록성공 : list로 이동
+	 * 	  등록실패 : "답변등록오류발생" reply페이지로 이동
+	 */
+	
+	/*@PostMapping("reply")
+	public ModelAndView reply (@Valid Board board, BindingResult bresult,
+			@RequestParam Map<String,String> param) {
+		ModelAndView mav = new ModelAndView();
+		if(bresult.hasErrors()) {
+			mav.getModel().putAll(bresult.getModel());
+			return mav;
+		}
+		Board rboard = service.boardReply(param);
+		int num = Integer.parseInt(param.get("num"));
+		if(rboard == null) {
+			throw new LoginException("답글등록 실패", "reply?num="+num);
+		}
+		return mav;
+	}*/
+	@PostMapping("reply")
+	public ModelAndView reply(@Valid Board board, BindingResult bresult) {
+		ModelAndView mav = new ModelAndView();
+		
+		if(board.getBoardid() ==null || board.getBoardid().equals("1")) {
+			mav.addObject("boardName","공지사항");
+		}else if(board.getBoardid().equals("2")) {
+			mav.addObject("boardName","자유게시판");
+		}else if(board.getBoardid().equals("3")) {
+			mav.addObject("boardName","QnA");
+		}
+		//유효성 검증 bresult 내부적으로 board객체를 가지고있음
+    	if(bresult.hasErrors()) {
+    		Board dbboard = service.getBoard(board.getNum()); //원글 정보를 db에서 읽기
+    		Map<String, Object> map = bresult.getModel();
+    		Board b = (Board)map.get("board");// 화면에서 입력받은 값을 저장한 Board객체
+    		b.setTitle(dbboard.getTitle());//원글의 제목으로 변경
+			mav.getModel().putAll(bresult.getModel());
+			return mav;
+    	}
+    	try {
+     	   service.boardReply(board);
+     	   mav.setViewName("redirect:list?boardid="+board.getBoardid());
+     	} catch(Exception e) {
+     		e.printStackTrace();
+     		throw new LoginException("답변등록시 오류 발생","reply?num="+board.getNum());
+     	}
+ 	    return mav;    	
+	}	
 }
