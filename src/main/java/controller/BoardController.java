@@ -12,14 +12,17 @@ import javax.validation.Valid;
 import org.apache.jasper.tagplugins.jstl.core.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.annotation.RequestScope;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
+import exception.BoardException;
 import exception.LoginException;
 import logic.Board;
 import logic.ShopService;
@@ -142,7 +145,7 @@ public class BoardController {
 		return mav;
 	}
 	
-	@GetMapping("reply")
+	@GetMapping({"reply","update","delete"})
 	public ModelAndView replyform(Integer num) {
 		ModelAndView mav = new ModelAndView();
 		Board board = service.getBoard(num);
@@ -215,5 +218,93 @@ public class BoardController {
      		throw new LoginException("답변등록시 오류 발생","reply?num="+board.getNum());
      	}
  	    return mav;    	
-	}	
+	}
+	/*
+	 * 1. 유효성 검증.
+	 * 2. 비밀번호 검증 => 검증오류 : 비번틀림 메세지출력 후 update로 이동
+	 * 3. db에 내용 수정. 업로드된 파일이 있는 경우 파일업로드
+	 * 4. 수정완료 : detail 페이지 이동
+	 * 	  수정실패 : 수정실패 메시지 출력후 update로 이동
+	 */
+	@PostMapping("update")
+	public ModelAndView update(@Valid Board board, BindingResult bresult,
+			HttpServletRequest request) {
+		ModelAndView mav = new ModelAndView();
+		//1
+		if(bresult.hasErrors()) {
+			mav.getModel().putAll(bresult.getModel());
+			return mav;
+		}
+		//2
+		Board getboard = service.getBoard(board.getNum());
+		System.out.println(getboard.getPass() +"=="+ board.getPass());
+		// 데이터베이스 비밀번호 == 입력된 비밀번호
+		if(!getboard.getPass().equals(board.getPass())) {
+			throw new BoardException("비밀번호 틀렸습니다.","update?num="+board.getNum());	
+		}
+		//3,4
+		try{
+			service.boardUpdate(board,request); //파일업로드,db게시글 수정
+			mav.setViewName("redirect:detail?num="+board.getNum());
+		} catch (Exception e) {
+			e.printStackTrace();
+     		throw new BoardException("게시글 수정 오류발생","update?num="+board.getNum());
+		}
+		return mav;
+	}
+	/*
+	 * 1. num,pass 파라미터 저장=> 매개변수처리
+	 * 2. 비밀번호 검증 : db에서 num게시글 조회. db에 등록된 비밀번호와 입력비밀번호 비교
+	 * 		비밀번호 오류 : error.board.password코드값 설정 => delete.jsp로 전달
+	 * 3. 비밀번호 일치 : db에서 num게시글 삭제
+	 * 		삭제성공 : list 페이지
+	 * 		삭제실패 :
+	 */
+	@PostMapping("delete")
+	public ModelAndView delete(Board board, BindingResult bresult) {
+		ModelAndView mav = new ModelAndView();
+		if(board.getPass() == null || board.getPass().trim().equals("")) {
+			bresult.reject("error.required.password");
+			return mav;
+		}
+		Board getboard = service.getBoard(board.getNum());
+		System.out.println(getboard.getPass() +"=="+ board.getNum());
+		// 데이터베이스 비밀번호 == 입력된 비밀번호
+		if(!getboard.getPass().equals(board.getPass())) {
+			bresult.reject("error.board.password");
+			return mav;
+		}
+		try{
+			service.boardDelete(board.getNum()); //파일업로드,db게시글 수정
+			mav.setViewName("redirect:list?boardid="+getboard.getBoardid());
+		} catch (Exception e) {
+			e.printStackTrace();
+     		bresult.reject("error.board.fail");
+		}
+		return mav;
+	}
+	
+	@RequestMapping("imgupload")
+	public String imgupload(MultipartFile upload, String CKEditorFuncNum,
+			HttpServletRequest request, Model model) {
+		/*반드시 upload여야함
+		 * upload : CKEditor 모듈에서 업로드되는 이미지의 이름.
+		 * 			업로드 되는 이미지파일의 내용. 이미지값
+		 * CKEditorFuncNum : CKEditor 모듈에서 파라미터로 전달되는 값.
+		 * model : ModelAndView 중 Model에 해당하는 객체
+		 * 			뷰에 전달할 데이터 정보 저장할 객체
+		 * return 타입이 String : 뷰의 이름
+		 */
+		//업로드되는 위치 폴더 = path
+		//request.getServletContext().getRealPath("/") : 웹어플리케이션의 절대경로값.
+		String path = request.getServletContext().getRealPath("/")+"board/imgfile/";
+		service.uploadFileCreate(upload,path);//upload(파일의내용), path(업로드되는 폴더)
+		//request.getContextPath() : 프로젝트명(웹어플리케이션이름). shop1/
+		//비글사진
+		//http://localhost:8080/shop1/board/imgfile/비글.jpeg
+		String fileName = request.getContextPath()// 웹어플리케이션 경로. 웹url정보
+				+"/board/imgfile/"+upload.getOriginalFilename();
+		model.addAttribute("fileName",fileName);
+		return "ckedit"; // view이름. /WEB-INF/view/ckedit.jsp
+	}
 }

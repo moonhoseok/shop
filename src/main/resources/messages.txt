@@ -17,3 +17,6 @@ error.required.phoneno=전화번호 입력하삼
 error.userid.search=아이디를 찾을 수 없음
 error.password.search=비밀번호 못찾음
 
+error.required.password=비밀번호를 입력하세요
+error.board.password=비밀번호가 틀립니다.
+error.board.fail=게시판삭제실패

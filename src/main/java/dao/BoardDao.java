@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.sql.DataSource;
 import javax.validation.Valid;
 
@@ -25,6 +26,10 @@ public class BoardDao {
 	// 조회된 컬럼명과 Board클래스의 프로퍼티가 같은 값을 Board객체 생성
 	private RowMapper<Board> mapper = 
 				new BeanPropertyRowMapper<>(Board.class);
+	private String select =" select num,writer,pass,"
+			+ "title,content,file1 fileurl,"
+			+ "regdate,readcnt,grp, grplevel, "
+			+ "grpstep,boardid from board";
 	@Autowired // spring-db.xml에서 설정한 datasource 객체 주입
 	public void setDataSource(DataSource dataSource) {
 		// datasource : db연결객체.
@@ -55,8 +60,7 @@ public class BoardDao {
 		}
 		return template.queryForObject(sql, param, Integer.class);
 	}
-	private String select =" select num,writer,pass,title,content,file1 fileurl,"
-			+ "regdate,readcnt,grp, grplevel, grpstep,boardid from board";
+	
 	
 	public List<Board> list(Integer pageNum, int limit, String boardid
 			,String column, String find) {
@@ -95,6 +99,16 @@ public class BoardDao {
 		param.put("grp", board.getGrp());
 		param.put("grpstep", board.getGrpstep());
 		template.update(sql, param);
+	}
+	public void update(Board board) {
+		String sql = "update board set writer=:writer, title=:title,"
+				+ " content=:content, file1=:fileurl where num=:num";
+		SqlParameterSource param = 
+				new BeanPropertySqlParameterSource(board);
+		template.update(sql, param);
+	}
+	public void delete(Integer num) {
+		template.update("delete from board where num="+num, param);
 	}
 	
 }

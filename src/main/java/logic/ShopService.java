@@ -56,7 +56,7 @@ public class ShopService {
 		itemdao.insert(item); // db에 추가
 	}
 	//파일 업로드 부분
-	private void uploadFileCreate(MultipartFile file, String path) {
+	public void uploadFileCreate(MultipartFile file, String path) {
 		// file : 파일의 내용
 		// path : 업로드할 폴더
 		String orgFile = file.getOriginalFilename(); // 파일이름
@@ -217,5 +217,20 @@ public class ShopService {
 		board.setGrplevel(board.getGrplevel() + 1); //원글의 grplevel => +1 답변글의 grplevel 설정
 		board.setGrpstep(board.getGrpstep() + 1);   //원글의 grpstep => +1 답변글의 grpstep 설정
 		boarddao.insert(board);
+	}
+
+	public void boardUpdate(Board board, HttpServletRequest request) {
+		if(board.getFile1() != null && !board.getFile1().isEmpty()) {
+			String path = request.getServletContext().getRealPath("/")
+					+"board/file/";
+			//파일 업로드 : board.getFile1()의 내용을 파일로 생성
+			this.uploadFileCreate(board.getFile1(), path); 
+			board.setFileurl(board.getFile1().getOriginalFilename());
+		}
+		boarddao.update(board);
+	}
+
+	public void boardDelete(Integer num) {
+		boarddao.delete(num);
 	}
 } 
